@@ -2,7 +2,6 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Product
@@ -10,6 +9,11 @@ from .serializers import ProductSerializer, UserSerializer
 from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import api_view
+from drf_yasg.utils import swagger_auto_schema
+from .serializers import LoginRequestSerializer
+from .serializers import CustomToken
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 class AuthViewSet(viewsets.ViewSet):
     """
@@ -17,42 +21,45 @@ class AuthViewSet(viewsets.ViewSet):
     """
     permission_classes = []  # Allow unauthenticated access
 
+    @swagger_auto_schema(
+        request_body=LoginRequestSerializer,
+        responses={200: UserSerializer,
+                   400: "Invalid email format"}
+    )
     @action(detail=False, methods=['post'])
     def login(self, request):
-        """
-        Login endpoint that accepts any credentials
-        """
-        username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password')
 
-        # Create or get user (for task purposes)
+        # Validate email format
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response(
+                {"error": "Invalid email format"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create or get user using email as username
+        username = email  # Generate username from email
         user, created = User.objects.get_or_create(
-            username=username,
-            defaults={'email': f'{username}@example.com'}
+            email=email,
+            defaults={
+                'username': username,
+                'email': email
+            }
         )
         if created:
             user.set_password(password)
             user.save()
 
-        login(request, user)
-        return Response(UserSerializer(user).data)
-
-    @action(detail=False, methods=['post'])
-    def logout(self, request):
-        """
-        Logout endpoint
-        """
-        logout(request)
-        return Response(status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['get'])
-    def current_user(self, request):
-        """
-        Get current user information
-        """
-        if request.user.is_authenticated:
-            return Response(UserSerializer(request.user).data)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        # Generate token
+        refresh = CustomToken.for_user(user)
+        
+        return Response({
+            'user': UserSerializer(user).data,
+            'access': str(refresh.access_token),
+        })
 
 class ProductViewSet(ListModelMixin, GenericViewSet):
     serializer_class = ProductSerializer
