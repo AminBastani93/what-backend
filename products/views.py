@@ -1,9 +1,7 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
-from django_filters.rest_framework import DjangoFilterBackend
 from .models import Product
 from .serializers import ProductSerializer, UserSerializer
 from rest_framework.mixins import ListModelMixin
@@ -64,6 +62,8 @@ class AuthViewSet(viewsets.ViewSet):
 class ProductViewSet(ListModelMixin, GenericViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description']
 
 @api_view(['GET'])
 def product_list(request):
