@@ -5,6 +5,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+# Define the schema view
 schema_view = get_schema_view(
     openapi.Info(
         title="What Products API",
@@ -18,10 +19,12 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+# Create a router and register the viewsets
 router = DefaultRouter()
 router.register(r'auth', AuthViewSet, basename='auth')
 router.register(r'products', ProductViewSet)
 
+# Define the URL patterns
 urlpatterns = [
     path('api/', include(router.urls)),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

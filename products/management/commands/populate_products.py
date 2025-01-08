@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from products.models import Product
 import random
 
+# Populates the database with sample products
 class Command(BaseCommand):
     help = 'Populates the database with 30 sample products'
 

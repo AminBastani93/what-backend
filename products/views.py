@@ -59,12 +59,14 @@ class AuthViewSet(viewsets.ViewSet):
             'access': str(refresh.access_token),
         })
 
+# Define the ProductViewSet to handle product-related actions
 class ProductViewSet(ListModelMixin, GenericViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'description']
 
+# Define the product_list view to handle GET requests for all products
 @api_view(['GET'])
 def product_list(request):
     products = Product.objects.all()

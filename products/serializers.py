@@ -4,11 +4,13 @@ from .models import Product
 from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
 
+# Define the User serializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email')
 
+# Define the Login Request serializer
 class LoginRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(
         help_text="User's email address"
@@ -36,13 +38,15 @@ class LoginRequestSerializer(serializers.Serializer):
             "required": ["email", "password"]
         }
 
+# Define the CustomToken class for custom JWT token
 class CustomToken(RefreshToken):
     @classmethod
     def for_user(cls, user):
         token = super().for_user(user)        
         token['email'] = user.email        
         return token
-    
+
+# Define the Product serializer
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
